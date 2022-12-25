@@ -5,13 +5,13 @@
 bl_info = {
     "name": "Sekisuihouse Blender Tools",
     "author": "Naoyuki Sakai",
-    "version": (1, 0),
-    "blender": (3, 30, 0),
+    "version": (1, 1),
+    "blender": (3, 34, 0),
     "location": "View3D > Sidebar",
     "description": "Provide several Sekisuihouse-specific tools",
     "warning": "",
     "doc_url": "",
-    "category": "System",
+    "category": "Sekisuihouse Tools",
 }
 
 
@@ -161,21 +161,25 @@ class convertMaterials(bpy.types.Operator):
     bl_label = "Convert Materials"
     bl_description = "Convert CG3S materials into Blender materials"
 
+    convert_dic = {
+        'SH_ow': ('convert_table_SHow.csv', 'SH_Outer_Wall_Materials.blend'),
+        'G_ex': ('convert_table_Gex.csv', 'Generic_Exterior_Materials.blend')
+    }
 
     def execute(self, context):
-        convertMaterials.convert_materials()
+        convertMaterials.convert_materials(convertMaterials.convert_dic)
         return {'FINISHED'}
 
 
-# 外装マテリアルblendファイルを返すモジュール
-    def ReturnExwAssetPath ():
-        ExwAssetFile = "SH_Materials_Outer_Walls.blend"
+# 外装マテリアルblendファイルのフルパスを返すモジュール
+    def ReturnExwAssetPath (source):
+        ExwAssetFile = source
         prefs = bpy.context.preferences
         filepaths = prefs.filepaths
-        asset_libraries = filepaths.asset_libraries
-        for asset_library in asset_libraries:
-            library_name = asset_library.name
-            library_path = Path(asset_library.path)
+        defined_asset_libraries = filepaths.asset_libraries
+        for defined_asset_library in defined_asset_libraries:
+            library_name = defined_asset_library.name
+            library_path = Path(defined_asset_library.path)
             blend_files = [fp for fp in library_path.glob("**/*.blend") if fp.is_file()]
             for blend_file in blend_files:
                 blend_file_str = str(blend_file)
@@ -186,30 +190,45 @@ class convertMaterials(bpy.types.Operator):
 
 
 # 指定したマテリアルをAppendするモジュール
-    def AppendExwMaterial(material):
-        ExwAssetPath = convertMaterials.ReturnExwAssetPath()
+    def AppendExwMaterial(source, material):
+        ExwAssetPath = convertMaterials.ReturnExwAssetPath(source)
         bpy.ops.wm.append(
             filepath = ExwAssetPath,
             filename = material,
             directory = ExwAssetPath + "/Material/")
 
 
-    def convert_materials():
+    def convert_materials(c_dic):
         dirPath = os.path.dirname(__file__)
-        TableName = "convertTable02.csv"
-        fh = open(dirPath + "/" + TableName, "r", encoding="utf-8", errors="", newline="" )
-        convertTable = csv.reader(fh, delimiter=",", doublequote=True, lineterminator="\r\n", quotechar='"', skipinitialspace=True)
+        for c_mode in c_dic.keys():
+            c_table_name = c_dic[c_mode][0]
+            c_source = c_dic[c_mode][1]
+            fh = open(dirPath + "/" + c_table_name, "r", encoding="utf-8", errors="", newline="" )
+            convert_table = csv.reader(fh, delimiter=",", doublequote=True, lineterminator="\r\n", quotechar='"', skipinitialspace=True)
 
+            for i in bpy.data.objects:           # オブジェクトを順に評価
+                for j in i.material_slots:       # オブジェクトのマテリアルスロットの中を評価し
+                    for k in convert_table:           # convertTableを順に評価し
+                        if j.material.name == k[0]:  # マテリアル名がCG3Sマテリアルだったら
+                            convertMaterials.AppendExwMaterial(c_source, k[1])
+                            j.material = bpy.data.materials[k[1]] # マテリアルをBlender用に変更
+                            i.name = k[2]        # オブジェクト名を対応した名前に変更
+                    fh.seek(0)
+            fh.close()
+
+
+    def chk_materials(convert_table, cg3s_material, material_source_file, blender_material, object_name):
         for i in bpy.data.objects:           # オブジェクトを順に評価
             for j in i.material_slots:       # オブジェクトのマテリアルスロットの中を評価し
-                for k in convertTable:           # convertTableを順に評価し
-                    if j.material.name == k[0]:  # マテリアル名がCG3Sマテリアルだったら
-                        convertMaterials.AppendExwMaterial(k[1])
-                        j.material = bpy.data.materials[k[1]] # マテリアルをBlender用に変更
-                        i.name = k[2]        # オブジェクト名を対応した名前に変更
+                for k in convert_table:           # convertTableを順に評価し
+                    if j.material.name == cg3s_material:  # マテリアル名がCG3Sマテリアルだったら
+                        convertMaterials.AppendExwMaterial(material_source_file, blender_material)
+                        j.material = bpy.data.materials[blender_material] # マテリアルをBlender用に変更
+                        i.name = object_name        # オブジェクト名を対応した名前に変更
                 fh.seek(0)
-
         fh.close()
+
+
 
 
 
