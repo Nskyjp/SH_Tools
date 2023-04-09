@@ -5,8 +5,8 @@
 bl_info = {
     "name": "Sekisuihouse Blender Tools",
     "author": "Naoyuki Sakai",
-    "version": (1, 1),
-    "blender": (3, 34, 0),
+    "version": (1, 2),
+    "blender": (3, 5, 0),
     "location": "View3D > Sidebar",
     "description": "Provide several Sekisuihouse-specific tools",
     "warning": "",
@@ -77,8 +77,8 @@ class Initializer(bpy.types.Operator):
             # 全オブジェクトを選択する
             bpy.ops.object.select_all(action='SELECT')
             # 全オブジェクトのスケールを10倍する
-            ratios=(10, 10, 10)
-            bpy.ops.transform.resize(value=ratios, constraint_axis=(True,True,True))
+            #ratios=(10, 10, 10)
+            #bpy.ops.transform.resize(value=ratios, constraint_axis=(True,True,True))
             # 選択したオブジェクトの親子を解除 Clear and Keep Transformation
             bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
             # 全てのオブジェクトのトランスフォームを適用する
