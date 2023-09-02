@@ -5,8 +5,8 @@
 bl_info = {
     "name": "Sekisuihouse Blender Tools",
     "author": "Naoyuki Sakai",
-    "version": (1, 2),
-    "blender": (3, 5, 0),
+    "version": (1, 4),
+    "blender": (3, 6, 2),
     "location": "View3D > Sidebar",
     "description": "Provide several Sekisuihouse-specific tools",
     "warning": "",
